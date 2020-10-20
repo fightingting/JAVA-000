@@ -1,0 +1,73 @@
+程序运行时添加了VM参数 -XX:+UseG1GC
+
+如下是执行 jmap -heap pid 的结果
+C:\Users\29271>jmap -heap 9100
+Attaching to process ID 9100, please wait...
+Debugger attached successfully.
+Server compiler detected.
+JVM version is 25.144-b01
+
+using thread-local object allocation.
+Garbage-First (G1) GC with 4 thread(s)
+
+Heap Configuration:
+   MinHeapFreeRatio         = 40
+   MaxHeapFreeRatio         = 70
+   MaxHeapSize              = 2124414976 (2026.0MB)
+   NewSize                  = 1363144 (1.2999954223632812MB)
+   MaxNewSize               = 1274019840 (1215.0MB)
+   OldSize                  = 5452592 (5.1999969482421875MB)
+   NewRatio                 = 2
+   SurvivorRatio            = 8
+   MetaspaceSize            = 21807104 (20.796875MB)
+   CompressedClassSpaceSize = 1073741824 (1024.0MB)
+   MaxMetaspaceSize         = 17592186044415 MB
+   G1HeapRegionSize         = 1048576 (1.0MB)
+
+Heap Usage:
+G1 Heap:
+   regions  = 2026
+   capacity = 2124414976 (2026.0MB)
+   used     = 83083768 (79.23485565185547MB)
+   free     = 2041331208 (1946.7651443481445MB)
+   3.9109010686996775% used
+G1 Young Generation:
+Eden Space:
+   regions  = 14
+   capacity = 49283072 (47.0MB)
+   used     = 14680064 (14.0MB)
+   free     = 34603008 (33.0MB)
+   29.78723404255319% used
+Survivor Space:
+   regions  = 5
+   capacity = 5242880 (5.0MB)
+   used     = 5242880 (5.0MB)
+   free     = 0 (0.0MB)
+   100.0% used
+G1 Old Generation:
+   regions  = 61
+   capacity = 79691776 (76.0MB)
+   used     = 63160824 (60.23485565185547MB)
+   free     = 16530952 (15.765144348144531MB)
+   79.2563890155993% used
+
+32762 interned Strings occupying 3792896 bytes.
+
+
+首先是了解下这些参数
+MinHeapFreeRatio，最小堆空闲空间占比，默认是40，即实际值小于40%时，需要扩容堆。
+MaxHeapFreeRatio，最大堆空闲空间占比，默认70，如果实际值大于70%，需要进行堆缩容
+MaxHeapSize，最大堆内存2026M，占电脑内存的四分之一
+NewSize，新生代堆空间的默认值
+MaxNewSize，新生代空间允许的最大值
+OldSize：老年代堆空间的默认值
+NewRatio：等于2表示新生代（伊甸区和两个存活区）与老年代堆空间的比值=1:2
+SurvivorRatio：等于8表示 伊甸区:S0:S1=8:1:1
+MetaspaceSize，MaxMetaspaceSize：元空间的默认值，元空间的最大值
+CompressedClassSpaceSize：CCS空间的默认值
+G1HeapRegionSize：G1垃圾回收算法，会把堆空间分很多Region，这个参数表示每个Region大小
+
+Heap Usage 下可以看到，G1把堆空间划分为2026个Region，容量自然是2026M，已使用了79.2M,使用率只占3.9%，不是很高。
+伊甸区使用率29.7%，也不高，只是存活区使用率是100%，这个很让人费解，两个存活区不是总有一个空闲吗，最大使用率也应该是50%啊
+老年代使用率也挺高的，使用率高达79%。
+
